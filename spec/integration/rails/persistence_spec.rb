@@ -5,7 +5,6 @@ if ENV["APPRAISAL_INITIALIZED"]
     # defined in spec/supports/rails/employee_controller.rb
     controller(ApplicationController, &EMPLOYEE_CONTROLLER_BLOCK)
 
-
     before do
       allow(controller.request.env).to receive(:[])
         .with(anything).and_call_original
@@ -146,6 +145,102 @@ if ENV["APPRAISAL_INITIALIZED"]
             do_destroy({ id: employee.id })
           }.to_not change { Employee.count }
           expect(json['error']).to eq('base' => ['Forced validation error'])
+        end
+      end
+    end
+
+    describe 'non-writable foreign keys' do
+      subject(:make_request) { do_update(payload) }
+
+      context 'when belongs_to' do
+        let(:klass) do
+          Class.new(EmployeeResource) do
+            self.validate_endpoints = false
+            attribute :classification_id, :integer, writable: false
+          end
+        end
+
+        let(:employee) { Employee.create!(first_name: 'Jane') }
+        let(:classification) { Classification.create!(description: 'foo') }
+
+        let(:payload) do
+          {
+            data: {
+              type: 'employees',
+              id: employee.id.to_s,
+              relationships: {
+                classification: {
+                  data: {
+                    id: classification.id.to_s,
+                    type: 'classifications'
+                  }
+                }
+              }
+            }
+          }
+        end
+
+        before do
+          allow(controller).to receive(:resource) { klass }
+        end
+
+        it 'does not require the FK to be a writable attribute' do
+          make_request
+          employee = Employee.last
+          expect(employee.classification_id).to eq(classification.id)
+        end
+      end
+
+      context 'when has_many' do
+        let(:klass) do
+          Class.new(EmployeeResource) do
+            self.validate_endpoints = false
+          end
+        end
+
+        let(:position_resource) do
+          Class.new(PositionResource) do
+            attribute :employee_id, :integer, writable: false
+          end
+        end
+
+        let(:employee) { Employee.create!(first_name: 'Jane') }
+
+        let(:payload) do
+          {
+            data: {
+              type: 'employees',
+              id: employee.id.to_s,
+              relationships: {
+                positions: {
+                  data: [{
+                    :'temp-id' => 'abc123',
+                    type: 'positions',
+                    method: 'create'
+                  }]
+                }
+              }
+            },
+            included: [
+              {
+                :'temp-id' => 'abc123',
+                type: 'positions',
+                attributes: { title: 'foo' }
+              }
+            ]
+          }
+        end
+
+        before do
+          klass.has_many :positions, resource: position_resource
+          allow(controller).to receive(:resource) { klass }
+        end
+
+        # TODO - when nonwritable assn fails
+        it 'does not require the FK to be a writable attribute' do
+          make_request
+          employee = Employee.last
+          expect(employee.positions.map(&:title)).to eq(['foo'])
         end
       end
     end
