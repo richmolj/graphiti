@@ -129,17 +129,29 @@ module Graphiti
               filter_name = value.keys.first.to_sym
               filter_value = value.values.first
               if @resource.get_attr!(filter_name, :filterable, request: true)
-                hash[filter_name] = filter_value
+                hash[filter_name] = nillify(filter_value)
               end
             elsif nested?(name)
               name = name.to_s.split(".").last.to_sym
               validate!(name, :filterable)
-              hash[name] = value
+              hash[name] = nillify(value)
             elsif top_level? && validate!(name, :filterable)
-              hash[name] = value
+              hash[name] = nillify(value)
             end
           end
         end
+      end
+    end
+
+    # TODO: filter reject nil by default
+    # # add to 'deny' by default
+    def nillify(value)
+      if value.is_a?(Hash)
+        hash_value = value.values.first
+        value[value.keys.first] = nillify(hash_value)
+        value
+      else
+        %w(null nil).include?(value) ? nil : value
       end
     end
 

@@ -749,6 +749,11 @@ RSpec.describe "filtering" do
         assert_filter_value([nil])
       end
 
+      it 'allows string nulls' do
+        params[:filter] = { foo: 'null' }
+        assert_filter_value([nil])
+      end
+
       context "when cannot coerce" do
         before do
           params[:filter] = {foo: "foo"}

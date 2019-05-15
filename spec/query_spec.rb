@@ -224,6 +224,28 @@ RSpec.describe Graphiti::Query do
           expect(hash).to eq(expected)
         end
 
+        context 'with string null' do
+          before do
+            expected[:filter][:name] = nil
+            params[:filter][:name] = 'null'
+          end
+
+          it 'works' do
+            expect(hash).to eq(expected)
+          end
+        end
+
+        context 'with string nil' do
+          before do
+            expected[:filter][:name] = nil
+            params[:filter][:name] = 'nil'
+          end
+
+          it 'works' do
+            expect(hash).to eq(expected)
+          end
+        end
+
         context "with stringified keys" do
           before do
             params.deep_stringify_keys!
@@ -265,6 +287,28 @@ RSpec.describe Graphiti::Query do
           expect(hash).to eq(expected)
         end
 
+        context 'with string null' do
+          before do
+            expected[:filter][:name] = nil
+            params[:filter][:name] = 'null'
+          end
+
+          it 'works' do
+            expect(hash).to eq(expected)
+          end
+        end
+
+        context 'with string nil' do
+          before do
+            expected[:filter][:name] = nil
+            params[:filter][:name] = 'nil'
+          end
+
+          it 'works' do
+            expect(hash).to eq(expected)
+          end
+        end
+
         context "with stringified keys" do
           before do
             params.deep_stringify_keys!
@@ -296,6 +340,28 @@ RSpec.describe Graphiti::Query do
 
         it "parses correctly" do
           expect(hash).to eq(expected)
+        end
+
+        context 'with string null' do
+          before do
+            params[:filter] = {'positions.title': {eq: "null"}}
+            expected[:include][:positions][:filter][:title][:eq] = nil
+          end
+
+          it 'works' do
+            expect(hash).to eq(expected)
+          end
+        end
+
+        context 'with string nil' do
+          before do
+            params[:filter] = {'positions.title': {eq: "nil"}}
+            expected[:include][:positions][:filter][:title][:eq] = nil
+          end
+
+          it 'works' do
+            expect(hash).to eq(expected)
+          end
         end
 
         context "when multiple levels" do
