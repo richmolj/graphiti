@@ -30,6 +30,7 @@ module Graphiti
           compare_extra_attributes(r, new_resource)
           compare_sorts(r, new_resource)
           compare_filters(r, new_resource)
+          compare_stats(r, new_resource)
           compare_relationships(r, new_resource)
         end
       end
@@ -200,6 +201,21 @@ module Graphiti
 
         if new_filter[:guard] && !old_filter[:guard]
           @errors << "#{old_resource[:name]}: filter #{name.inspect} went from unguarded to guarded."
+        end
+      end
+    end
+
+    def compare_stats(old_resource, new_resource)
+      old_resource[:stats].each_pair do |name, old_calculations|
+        new_calculations = new_resource[:stats][name]
+        if new_calculations
+          old_calculations.each do |calc|
+            unless new_calculations.include?(calc)
+              @errors << "#{old_resource[:name]}: calculation #{calc.inspect} was removed from stat #{name.inspect}."
+            end
+          end
+        else
+          @errors << "#{old_resource[:name]}: stat #{name.inspect} was removed."
         end
       end
     end
