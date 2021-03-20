@@ -17,6 +17,18 @@ RSpec.describe "extra_fields" do
     json["data"][0]["attributes"]
   end
 
+  it "does not fuck up when added twice" do
+    resource.extra_attribute :foo, :string do
+      "foo"
+    end
+    resource.extra_attribute :bar, :string do
+      "bar"
+    end
+    render
+    expect(attributes)
+    expect(attributes.keys).to match_array(%w[first_name last_name age])
+  end
+
   it "does not include extra fields when not requested" do
     render
     expect(attributes.keys).to match_array(%w[first_name last_name age])
