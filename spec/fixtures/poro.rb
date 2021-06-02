@@ -102,6 +102,7 @@ module PORO
 
         start_at = (params[:page] - 1) * (params[:per])
         end_at = (params[:page] * params[:per]) - 1
+        binding.pry
         return [] if end_at < 0
         records[start_at..end_at]
       end

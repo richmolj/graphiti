@@ -92,7 +92,8 @@ module Graphiti
           :relationships_writable_by_default,
           :filters_accept_nil_by_default,
           :filters_deny_empty_by_default,
-          :graphql_entrypoint
+          :graphql_entrypoint,
+          :cursor_paginatable
 
         class << self
           prepend Overrides
@@ -103,6 +104,7 @@ module Graphiti
           klass.config = Util::Hash.deep_dup(config)
           klass.adapter ||= Adapters::Abstract
           klass.max_page_size ||= DEFAULT_MAX_PAGE_SIZE
+          klass.default_page_size ||= Scoping::Paginate::DEFAULT_PAGE_SIZE
           # re-assigning causes a new Class.new
           klass.serializer = (klass.serializer || klass.infer_serializer_superclass)
           klass.type ||= klass.infer_type

@@ -28,6 +28,29 @@ module Graphiti
 
         existing = @serializer.send(applied_method)
         @serializer.send(:"#{applied_method}=", [@name] | existing)
+
+        @serializer.meta do
+          # Not a remote resource and requested/enabled
+          if @resource.respond_to?(:cursor_paginatable?) &&
+              @resource.cursor_paginatable?
+
+            starting_offset = 0
+            page_param = @proxy.query.pagination
+            if (page_number = page_param[:number])
+              page_size = page_param[:size] || @resource.default_page_size
+              starting_offset = (page_number - 1) * page_size
+            end
+
+            if (cursor = page_param[:after])
+              # NB perf - put in query.rb
+              starting_offset = JSON.parse(Base64.decode64(cursor))["offset"]
+            end
+
+            current_offset = @object.instance_variable_get(:@__graphiti_index)
+            offset = starting_offset + current_offset + 1 # (+ 1 b/c o-base index)
+            {cursor: Base64.encode64({offset: offset}.to_json)}
+          end
+        end
       end
 
       private

@@ -195,8 +195,9 @@ module Graphiti
               end
             elsif nested?(name)
               hash[name.to_s.split(".").last.to_sym] = value
-            elsif top_level? && [:number, :size, :offset].include?(name.to_sym)
-              hash[name.to_sym] = value.to_i
+            elsif top_level? && Scoping::Paginate::PARAMS.include?(name.to_sym)
+              value = value.to_i unless [:before, :after].include?(name.to_sym)
+              hash[name.to_sym] = value
             end
           end
         end

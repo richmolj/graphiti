@@ -1866,4 +1866,109 @@ RSpec.describe "serialization" do
       end
     end
   end
+
+  describe "cursors" do
+    context "when cursors are disabled" do
+      it "does not render a cursor" do
+      end
+    end
+
+    context "when cursors are enabled" do
+      let!(:employee1) { PORO::Employee.create }
+      let!(:employee2) { PORO::Employee.create }
+      let!(:employee3) { PORO::Employee.create }
+      let!(:employee4) { PORO::Employee.create }
+
+      def get_cursor(index)
+        cursor = json["data"][index]["meta"]["cursor"]
+        JSON.parse(Base64.decode64(cursor)).symbolize_keys
+      end
+
+      context "on the resource" do
+        before do
+          resource.cursor_paginatable = true
+        end
+
+        it "renders cursors" do
+          render
+          expect(json["data"][0]["meta"]["cursor"]).to be_present
+          expect(json["data"][1]["meta"]["cursor"]).to be_present
+          expect(json["data"][2]["meta"]["cursor"]).to be_present
+          expect(json["data"][3]["meta"]["cursor"]).to be_present
+        end
+
+        context "when using page number" do
+          before do
+            params[:page] = {number: 2}
+          end
+
+          context "and implicit page size" do
+            before do
+              resource.default_page_size = 1
+            end
+
+            it "is respected in the offset" do
+              render
+              expect(get_cursor(0)).to eq(offset: 1)
+            end
+          end
+
+          context "and explicit page size" do
+            before do
+              params[:page][:size] = 2
+            end
+
+            it "is respected in the offset" do
+              render
+              expect(get_cursor(0)).to eq(offset: 2)
+              expect(get_cursor(1)).to eq(offset: 3)
+            end
+          end
+        end
+
+        context "when using after cursor" do
+          before do
+            cursor = Base64.encode64({offset: 2}.to_json)
+            params[:page] = {after: cursor}
+          end
+
+          it "is respected in the offset" do
+            render
+            expect(get_cursor(0)).to eq(offset: 2)
+            expect(get_cursor(1)).to eq(offset: 3)
+          end
+
+          context "when using after cursor" do
+            before do
+              cursor = Base64.encode64({offset: 2}.to_json)
+              params[:page] = {after: cursor}
+            end
+  
+            xit "TODO" do
+              render
+              expect(get_cursor(0)).to eq(offset: 2)
+              expect(get_cursor(1)).to eq(offset: 3)
+            end
+          end
+        end
+      end
+
+      context "via cursors_on_demand" do
+        context "and the param is given" do
+          it "renders cursors" do
+          end
+
+          context "but the resource has disabled cursors" do
+            it "does not render cursors" do
+            end
+          end
+        end
+
+        context "and the param is not given" do
+          it "does not render cursors" do
+          end
+        end
+      end
+    end
+  end
 end

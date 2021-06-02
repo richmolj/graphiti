@@ -1,6 +1,7 @@
 module Graphiti
   class Scoping::Paginate < Scoping::Base
     DEFAULT_PAGE_SIZE = 20
+    PARAMS = [:number, :size, :offset, :before, :after]
 
     def apply
       if size > resource.max_page_size
@@ -64,9 +65,29 @@ module Graphiti
     end
 
     def offset
+      offset = 0
       if (value = page_param[:offset])
-        value.to_i
+        offset = value.to_i
       end
+
+      if before_cursor&.key?(:offset)
+        offset = before_cursor[:offset] - (size * number) - 2
+        offset = 0 if offset.negative?
+      end
+
+      if after_cursor&.key?(:offset)
+        offset = after_cursor[:offset]
+      end
+
+      offset
+    end
+
+    def after_cursor
+      @after_cursor ||= parse_cursor(:after)
+    end
+
+    def before_cursor
+      @before_cursor ||= parse_cursor(:before)
     end
 
     def number
@@ -74,7 +95,13 @@ module Graphiti
     end
 
     def size
-      (page_param[:size] || resource.default_page_size || DEFAULT_PAGE_SIZE).to_i
+      (page_param[:size] || resource.default_page_size).to_i
+    end
+
+    def parse_cursor(key)
+      if (value = page_param[key])
+        JSON.parse(Base64.decode64(value)).deep_symbolize_keys
+      end
     end
   end
 end
